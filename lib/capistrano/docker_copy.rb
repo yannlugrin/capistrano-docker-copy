@@ -114,7 +114,7 @@ class Capistrano::DockerCopy < Capistrano::SCM::Plugin
 
       execute :mkdir, '-p', release_path
       within release_path do
-        execute :tar, '-xpzf', me.remote_archive_path
+        execute :tar, '-xozf', me.remote_archive_path
       end
     end
   end
