@@ -14,6 +14,7 @@ class Capistrano::DockerCopy < Capistrano::SCM::Plugin
     set_if_empty :docker_container_name, 'capistrano_deploy'
     set_if_empty :docker_roles, %(app)
     set_if_empty :local_temporary_root, File.expand_path('./tmp/deploy', Dir.pwd)
+    set_if_empty :local_exclude_list, %w(.git spec test features)
   end
 
   def register_hooks
@@ -36,6 +37,10 @@ class Capistrano::DockerCopy < Capistrano::SCM::Plugin
 
   def local_source
     File.join(local_temporary_root, 'source')
+  end
+
+  def local_exclude_file
+    File.join(local_temporary_root, 'exclude.txt')
   end
 
   def local_archive_path
@@ -99,8 +104,14 @@ class Capistrano::DockerCopy < Capistrano::SCM::Plugin
     me = self
 
     run_locally do
+      File.open(me.local_exclude_file, 'w+') do |file|
+        fetch(:local_exclude_list).each do |pattern|
+          file.puts pattern
+        end
+      end
+
       within me.local_source do
-        execute :tar, '-cpzf', me.local_archive_path, '.'
+        execute :tar, '-X', me.local_exclude_file, '-cpzf', me.local_archive_path, '.'
       end
     end
   end
