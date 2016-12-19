@@ -14,7 +14,10 @@ class Capistrano::DockerCopy < Capistrano::SCM::Plugin
     set_if_empty :docker_container_name, 'capistrano_deploy'
     set_if_empty :docker_roles, %(app)
     set_if_empty :local_temporary_root, File.expand_path('./tmp/deploy', Dir.pwd)
-    set_if_empty :local_exclude_list, %w(.git spec test features)
+    set_if_empty :local_exclude_list, %w(.git)
+    set_if_empty :remote_temporary_root, -> {
+      File.join(fetch(:tmp_dir), fetch(:application))
+    }
   end
 
   def register_hooks
@@ -48,7 +51,7 @@ class Capistrano::DockerCopy < Capistrano::SCM::Plugin
   end
 
   def remote_temporary_root
-    File.join(fetch(:tmp_dir), fetch(:application))
+    fetch(:remote_temporary_root)
   end
 
   def remote_archive_path
