@@ -1,11 +1,10 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'capistrano/docker_copy/version'
 
 Gem::Specification.new do |spec|
   spec.name          = 'capistrano-docker-copy'
-  spec.version       = Capistrano::DockerCopy::VERSION
+  spec.version       = '0.1.0'
   spec.authors       = ['Yann Lugrin']
   spec.email         = ['yann.lugrin@yalty.io']
 
