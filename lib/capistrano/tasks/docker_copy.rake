@@ -17,6 +17,16 @@ namespace :docker_copy do
     docker_copy_plugin.release
   end
 
+  desc 'Cleanup'
+  task :cleanup do
+    docker_copy_plugin.cleanup
+  end
+
+  desc 'Run on failure'
+  task :failed do
+    docker_copy_plugin.cleanup
+  end
+
   desc 'Determine the revision that will be deployed'
   task :set_current_revision do
     set :current_revision, docker_copy_plugin.fetch_revision

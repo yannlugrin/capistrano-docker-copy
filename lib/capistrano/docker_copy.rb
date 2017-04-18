@@ -16,7 +16,7 @@ class Capistrano::DockerCopy < Capistrano::SCM::Plugin
     set_if_empty :local_temporary_root, File.expand_path('./tmp/deploy', Dir.pwd)
     set_if_empty :local_exclude_list, %w(.git)
     set_if_empty :remote_temporary_root, -> {
-      File.join(fetch(:tmp_dir), fetch(:application))
+      File.join(fetch(:tmp_dir), 'deploy', fetch(:application))
     }
   end
 
@@ -24,6 +24,8 @@ class Capistrano::DockerCopy < Capistrano::SCM::Plugin
     after 'deploy:new_release_path', 'docker_copy:create_release'
     before 'deploy:check', 'docker_copy:check'
     before 'deploy:set_current_revision', 'docker_copy:set_current_revision'
+    before 'deploy:cleanup', 'docker_copy:cleanup'
+    after 'deploy:failed', 'docker_copy:failed'
   end
 
   def define_tasks
@@ -81,14 +83,24 @@ class Capistrano::DockerCopy < Capistrano::SCM::Plugin
     docker :cp, "#{fetch(:docker_container_name)}:#{fetch(:docker_source)}",
       local_source
   ensure
-    docker :rm, fetch(:docker_container_name)
+    docker :rm, fetch(:docker_container_name), raise_on_non_zero_exit: false
   end
 
   def release
     build_archive
     copy_to_server
-  ensure
-    cleanup
+  end
+
+  def cleanup
+    me = self
+
+    run_locally do
+      execute :rm, '-rf', me.local_temporary_root, raise_on_non_zero_exit: false
+    end
+
+    on release_roles fetch(:docker_roles) do
+      execute :rm, '-rf', me.remote_temporary_root, raise_on_non_zero_exit: false
+    end
   end
 
   def fetch_revision
@@ -130,18 +142,6 @@ class Capistrano::DockerCopy < Capistrano::SCM::Plugin
       within release_path do
         execute :tar, '-xozf', me.remote_archive_path
       end
-    end
-  end
-
-  def cleanup
-    me = self
-
-    run_locally do
-      execute :rm, '-rf', me.local_temporary_root
-    end
-
-    on release_roles fetch(:docker_roles) do
-      execute :rm, '-f', me.remote_archive_path
     end
   end
 end
